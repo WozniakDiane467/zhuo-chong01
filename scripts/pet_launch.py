@@ -13,11 +13,10 @@ import socket
 import time
 
 DAEMON_PORT = 19876
-SKILL_DIR = os.path.join(os.path.expanduser("~"), ".workbuddy", "skills", "workbuddy-pet-pro")
+SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(SKILL_DIR, "scripts")
 ASSETS_DIR = os.path.join(SKILL_DIR, "assets")
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".workbuddy", "pet_config.json")
-HOOKS_MARKER = os.path.join(os.path.expanduser("~"), ".workbuddy", ".pet-hooks-installed")
 
 
 def get_active_pet() -> tuple[str, str]:
@@ -89,11 +88,7 @@ def ensure_hooks_installed():
             [sys.executable, install_script],
             capture_output=True, text=True, timeout=10, **_popen_kwargs(),
         )
-        if result.returncode == 0:
-            os.makedirs(os.path.dirname(HOOKS_MARKER), exist_ok=True)
-            with open(HOOKS_MARKER, "w") as f:
-                f.write(str(time.time()))
-        else:
+        if result.returncode != 0:
             print(f"[launch] Hook install warning: {result.stderr.strip()}")
     except (OSError, subprocess.TimeoutExpired) as e:
         print(f"[launch] Hook install skipped: {e}")

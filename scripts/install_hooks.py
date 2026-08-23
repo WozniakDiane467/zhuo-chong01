@@ -63,10 +63,9 @@ def hooks_match(existing: dict, new_hook: dict) -> bool:
     """Check if two hook entries are effectively the same."""
     if existing.get("type") != new_hook.get("type"):
         return False
-    if existing.get("command") == new_hook.get("command"):
-        return True
-    if existing.get("prompt") == new_hook.get("prompt"):
-        return True
+    for field in ("command", "prompt"):
+        if existing.get(field) and existing.get(field) == new_hook.get(field):
+            return True
     return False
 
 
@@ -86,7 +85,7 @@ def install(args):
 
     for event_name, event_entries in skill_hooks.items():
         if event_name not in settings_hooks:
-            # Add marker comment and hooks
+            # 事件不存在则整体加入
             settings_hooks[event_name] = event_entries
             changed = True
             print(f"[install] Added {len(event_entries)} hook entry(s) for {event_name}")

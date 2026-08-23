@@ -32,7 +32,7 @@ DEFAULT_TIMEOUT = 60
 
 def load_config(config_file: str = CONFIG_FILE) -> dict:
     defaults = {"confirm_timeout": DEFAULT_TIMEOUT,
-                "confirm_rules": DEFAULT_CONFIRM_RULES,
+                "confirm_rules": list(DEFAULT_CONFIRM_RULES),
                 "allow_rules": []}
     try:
         if os.path.exists(config_file):
@@ -62,7 +62,10 @@ def _tool_match(tool_pattern: str, tool_name: str) -> bool:
 
 
 def _input_text(tool_input: dict) -> str:
-    return json.dumps(tool_input, ensure_ascii=False)
+    try:
+        return json.dumps(tool_input, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return str(tool_input)
 
 
 def _rule_hits(rule: dict, tool_name: str, text: str) -> bool:
