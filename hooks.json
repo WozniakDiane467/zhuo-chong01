@@ -1,0 +1,71 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_confirm_hook.py\"",
+            "timeout": 65
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_bridge.py\" thinking \"正在思考...\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_bridge.py\" running \"工作中...\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_bridge.py\" thinking \"正在思考...\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_bridge.py\" waving \"完成！\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"{SKILL_DIR}/scripts/pet_bridge.py\" idle",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
