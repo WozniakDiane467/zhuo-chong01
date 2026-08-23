@@ -29,12 +29,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 from pet_constants import DAEMON_PORT, STATE_FILE
+import pet_confirm_rules as rules
 
 MIN_DWELL = 0.3  # Minimum seconds a state must persist before being overwritten
+CONFIRM_RETENTION = 300  # seconds to keep decided requests before cleanup
 
 
 class PetDaemon:
-    def __init__(self):
+    def __init__(self, config_file: str = None):
         self.current_state = "idle"
         self.current_message = ""
         self.last_update = time.time()
@@ -47,6 +49,7 @@ class PetDaemon:
         self.confirm_requests = {}      # request_id -> dict
         self._confirm_seq = 0
         self._remembered = None         # (tool_name, tool_input) from last remember
+        self.config_file = config_file
 
     def set_state(self, state: str, message: str = ""):
         with self.lock:
@@ -123,6 +126,8 @@ class PetDaemon:
             if req["decision"] is None and now - req["created_at"] > req["timeout"]:
                 req["decision"] = "deny"
                 req["reason"] = "timeout"
+            elif req["decision"] is not None and now - req["created_at"] > CONFIRM_RETENTION:
+                del self.confirm_requests[rid]
 
     def get_pending(self) -> list:
         with self.confirm_lock:
@@ -145,19 +150,27 @@ class PetDaemon:
             return {"status": "decided", "decision": req["decision"],
                     "reason": req.get("reason", "")}
 
-    def respond(self, request_id: str, decision: str):
+    def respond(self, request_id: str, decision: str) -> bool:
         with self.confirm_lock:
             req = self.confirm_requests.get(request_id)
             if req is None:
-                return
+                return False
+            if req["decision"] is not None:
+                return False  # already decided, cannot override
             if decision == "remember":
                 self._remembered = (req["tool_name"], req.get("tool_input", {}))
+                try:
+                    rules.remember_rule(req["tool_name"], req.get("tool_input", {}),
+                                        self.config_file or rules.CONFIG_FILE)
+                except Exception:
+                    pass
                 req["decision"] = "allow"
                 req["reason"] = "remembered"
+                return True
             elif decision in ("allow", "deny"):
                 req["decision"] = decision
-            else:
-                return
+                return True
+            return False
 
     def get_remembered(self):
         with self.confirm_lock:
@@ -195,18 +208,12 @@ class PetHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/")
         params = parse_qs(parsed.query)
 
-        fixed_params = {}
-        for k, v_list in params.items():
-            fixed_params[k] = [
-                v.encode("latin-1").decode("utf-8") for v in v_list
-            ]
-
         if path in ("", "/", "/status"):
             self._send_json(self.daemon.get_status())
 
         elif path == "/set":
-            state = fixed_params.get("state", [""])[0]
-            msg = fixed_params.get("msg", [""])[0]
+            state = params.get("state", [""])[0]
+            msg = params.get("msg", [""])[0]
             if not state:
                 self._send_json({"error": "Missing 'state' parameter"}, 400)
                 return
@@ -216,7 +223,7 @@ class PetHandler(BaseHTTPRequestHandler):
         elif path == "/pending":
             self._send_json({"requests": self.daemon.get_pending()})
         elif path in ("/confirm/result", "/result"):
-            rid = fixed_params.get("request_id", [""])[0]
+            rid = params.get("request_id", [""])[0]
             self._send_json(self.daemon.get_confirm_result(rid))
 
         elif path == "/idle":
@@ -251,13 +258,19 @@ class PetHandler(BaseHTTPRequestHandler):
             summary = data.get("summary", "")
             tool_name = data.get("tool_name", "")
             tool_input = data.get("tool_input", {})
-            timeout = float(data.get("timeout", 60))
+            try:
+                timeout = float(data.get("timeout", 60))
+            except (TypeError, ValueError):
+                timeout = 60
             rid = self.daemon.create_confirm(tool_name, summary, tool_input, timeout)
             self._send_json({"ok": True, "request_id": rid})
         elif path == "/respond":
             rid = data.get("request_id", "")
             decision = data.get("decision", "")
-            self.daemon.respond(rid, decision)
+            ok = self.daemon.respond(rid, decision)
+            if not ok:
+                self._send_json({"error": "invalid request_id or decision"}, 400)
+                return
             self._send_json({"ok": True, "request_id": rid, "decision": decision})
         elif path == "/idle":
             self.daemon.set_state("idle", "")

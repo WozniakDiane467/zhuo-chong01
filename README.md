@@ -76,7 +76,7 @@ GIF 命名：`<宠物名>-<状态>.gif`
 |------|------|
 | `pet_launch.py` | 一键启动器（daemon + 宠物窗口） |
 | `desktop_pet.py` | 桌面宠物主程序（tkinter 透明窗口） |
-| `pet_daemon.py` | 状态管理 HTTP 服务（端口 19876） |
+| `pet_daemon.py` | 状态管理 HTTP 服务（端口 19877） |
 | `pet_bridge.py` | CLI 桥接，手动控制状态 |
 | `install_hooks.py` | 安装/卸载 WorkBuddy hooks |
 | `compose_gif_atlas.py` | GIF 合成精灵图集 |
