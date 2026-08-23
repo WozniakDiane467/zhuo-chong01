@@ -215,7 +215,7 @@ class PetHandler(BaseHTTPRequestHandler):
 
         elif path == "/pending":
             self._send_json({"requests": self.daemon.get_pending()})
-        elif path == "/confirm/result":
+        elif path in ("/confirm/result", "/result"):
             rid = fixed_params.get("request_id", [""])[0]
             self._send_json(self.daemon.get_confirm_result(rid))
 
