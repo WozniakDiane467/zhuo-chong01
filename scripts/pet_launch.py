@@ -12,7 +12,7 @@ import subprocess
 import socket
 import time
 
-DAEMON_PORT = 19876
+DAEMON_PORT = 19877
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(SKILL_DIR, "scripts")
 ASSETS_DIR = os.path.join(SKILL_DIR, "assets")

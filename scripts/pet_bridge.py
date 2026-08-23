@@ -10,7 +10,7 @@ import sys
 import json
 import urllib.request
 
-DAEMON_URL = "http://127.0.0.1:19876"
+DAEMON_URL = "http://127.0.0.1:19877"
 
 def main():
     if len(sys.argv) < 2:
