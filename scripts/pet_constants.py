@@ -48,7 +48,9 @@ STATE_LABELS = {
 # ── File paths ──
 STATE_FILE = os.path.join(os.path.expanduser("~"), ".workbuddy", "pet_state.json")
 PET_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".workbuddy", "pet_config.json")
-DAEMON_PORT = 19876
+DAEMON_PORT = 19877
+CONFIRM_POLL_INTERVAL = 500     # ms, pet polls /pending
+CONFIRM_RESULT_POLL = 0.5       # s, hook polls /confirm/result
 
 # ── Pixel bubble styling ──
 BUBBLE_BG = "#f8f8f0"
